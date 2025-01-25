@@ -13,16 +13,45 @@
         button { background-color: #2196F3; color: white; border: none; cursor: pointer; }
         button:hover { background-color: #1976D2; }
         .results { margin-top: 20px; }
-        .summary { background: #ffffff; padding: 15px; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); margin-top: 20px; }
-        .summary h3 { text-align: center; color: #2196F3; font-size: 1.5em; margin-bottom: 15px; }
-        .summary div { display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 10px 0; font-size: 1em; }
-        .summary div:last-child { border-bottom: none; }
-        .summary .week { color: #555; font-weight: bold; }
-        .summary .cajas { color: #2196F3; font-weight: bold; }
-        .summary .comision { color: #f44336; font-weight: bold; }
-        .summary .devoluciones { color: #ff9800; font-weight: bold; }
+        .summary { 
+            background: #ffffff; 
+            padding: 15px; 
+            border-radius: 10px; 
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); 
+            margin-top: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .summary:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2); 
+        }
+        .summary h3 { 
+            text-align: center; 
+            color: #2196F3; 
+            font-size: 1.5em; 
+            margin-bottom: 15px; 
+        }
+        .summary div { 
+            display: flex; 
+            justify-content: space-between; 
+            padding: 10px 0; 
+            font-size: 1em; 
+            border-bottom: 1px solid #ddd; 
+        }
+        .summary div:last-child { 
+            border-bottom: none; 
+        }
+        .summary span { 
+            flex: 1; 
+            text-align: center; 
+        }
         .clear-btn { background-color: #f44336; }
         .welcome-message { font-size: 1.2em; color: #2196F3; text-align: center; margin-bottom: 20px; }
+        #mensajeExito { display: none; color: green; text-align: center; margin-top: 10px; font-weight: bold; }
+        .semana { color: #2196F3; }
+        .cajas { color: #4CAF50; }
+        .comision { color: #FF9800; }
+        .devoluciones { color: #F44336; }
     </style>
 </head>
 <body>
@@ -38,6 +67,7 @@
         <label for="devoluciones">Devoluciones:</label>
         <input type="number" id="devoluciones" placeholder="Cantidad de devoluciones" value="0">
         <button onclick="registrarComision()">Registrar</button>
+        <div id="mensajeExito"></div>
         <button onclick="mostrarSemanaActual()">Ver Semana Actual</button>
         <div class="results" id="resultado"></div>
         
@@ -47,25 +77,18 @@
         <button class="clear-btn" onclick="limpiarRegistros()">Limpiar Registros</button>
     </div>
     
+    <footer style="text-align: center; margin-top: 20px;">
+        Hecho Con <span style="color: red;">&lt;3</span> Por: CHINO
+    </footer>
+    
     <script>
-        // Función para obtener el número de semana desde el viernes 24 de enero de 2025
         function obtenerNumeroSemana(fecha) {
-            const inicioSemanaBase = new Date('2025-01-24'); // Viernes 24 de enero de 2025 (inicio de la semana 4)
+            const inicioSemanaBase = new Date('2025-01-24'); // Viernes 24 de enero de 2025
             const diffTime = fecha - inicioSemanaBase;
-            const diffWeeks = Math.floor(diffTime / (7 * 24 * 60 * 60 * 1000)); // Calculamos las semanas completas
-
-            return diffWeeks + 4; // Ajustamos la semana base a la semana 4
+            const diffWeeks = Math.floor(diffTime / (7 * 24 * 60 * 60 * 1000));
+            return diffWeeks + 4;
         }
 
-        // Función para formatear las fechas en formato dd/mm/yyyy
-        function formatFecha(fecha) {
-            const dia = String(fecha.getDate()).padStart(2, '0');
-            const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-            const anio = fecha.getFullYear();
-            return `${anio}-${mes}-${dia}`;
-        }
-
-        // Función para solicitar el nombre si es la primera vez que se abre la aplicación
         function solicitarNombre() {
             const nombre = localStorage.getItem('nombre');
             if (!nombre) {
@@ -78,40 +101,50 @@
             }
         }
 
-        // Llamar la función al cargar la página
         window.onload = function() {
             solicitarNombre();
         }
 
-        // Función para registrar la comisión, las cajas entregadas y las devoluciones
         function registrarComision() {
             const fecha = new Date(document.getElementById('fecha').value);
             let cajas = parseInt(document.getElementById('cajas').value);
             const devoluciones = parseInt(document.getElementById('devoluciones').value) || 0;
-            if (!fecha || !cajas || cajas <= 0) {
+
+            if (!document.getElementById('fecha').value || isNaN(cajas) || cajas <= 0) {
                 alert('Por favor ingrese una fecha y una cantidad válida.');
                 return;
             }
+
             cajas -= devoluciones;
             if (cajas < 0) cajas = 0;
             const comision = cajas * 0.70;
 
-            // Obtener el número de semana basado en el viernes 24 de enero de 2025
             const numeroSemana = obtenerNumeroSemana(fecha);
-
             const key = `${numeroSemana}`;
 
-            // Recuperar los datos de la semana del localStorage o inicializarlos si no existen
             const datosSemana = JSON.parse(localStorage.getItem(key)) || { cajas: 0, comision: 0, devoluciones: 0 };
             datosSemana.cajas += cajas;
             datosSemana.comision += comision;
             datosSemana.devoluciones += devoluciones;
 
-            // Guardar los datos acumulados en el localStorage
             localStorage.setItem(key, JSON.stringify(datosSemana));
+
+            // Mostrar mensaje de éxito
+            const mensaje = document.getElementById('mensajeExito');
+            mensaje.textContent = "¡Comisión registrada!";
+            mensaje.style.display = 'block';
+
+            // Ocultar el mensaje después de 3 segundos
+            setTimeout(() => {
+                mensaje.style.display = 'none';
+            }, 3000);
+
+            // Limpiar los campos del formulario
+            document.getElementById('fecha').value = '';
+            document.getElementById('cajas').value = '';
+            document.getElementById('devoluciones').value = '';
         }
 
-        // Función para mostrar solo la semana actual
         function mostrarSemanaActual() {
             const semanaActual = obtenerNumeroSemana(new Date());
             const datos = JSON.parse(localStorage.getItem(`${semanaActual}`));
@@ -119,10 +152,12 @@
             if (datos) {
                 let resumen = `<div class="summary">
                                 <h3>Resumen Semana Actual (Semana ${semanaActual})</h3>
-                                <div><span class="week">Semana ${semanaActual}</span>
-                                      <span class="cajas">${datos.cajas} cajas</span>
-                                      <span class="comision">$${datos.comision.toFixed(2)}</span>
-                                      <span class="devoluciones">${datos.devoluciones} devoluciones</span></div>
+                                <div>
+                                    <span class="semana">Semana ${semanaActual}</span>
+                                    <span class="cajas">${datos.cajas} cajas</span>
+                                    <span class="comision">$${datos.comision.toFixed(2)}</span>
+                                    <span class="devoluciones">${datos.devoluciones} devoluciones</span>
+                                </div>
                                </div>`;
                 document.getElementById('resultado').innerHTML = resumen;
             } else {
@@ -130,7 +165,6 @@
             }
         }
 
-        // Función para mostrar el resumen de una semana específica
         function mostrarResumenPorSemana() {
             const semanaBuscada = document.getElementById('buscarSemana').value;
             const datos = JSON.parse(localStorage.getItem(`${semanaBuscada}`));
@@ -138,10 +172,12 @@
             if (datos) {
                 let resumen = `<div class="summary">
                                 <h3>Resumen Semana ${semanaBuscada}</h3>
-                                <div><span class="week">Semana ${semanaBuscada}</span>
-                                      <span class="cajas">${datos.cajas} cajas</span>
-                                      <span class="comision">$${datos.comision.toFixed(2)}</span>
-                                      <span class="devoluciones">${datos.devoluciones} devoluciones</span></div>
+                                <div>
+                                    <span class="semana">Semana ${semanaBuscada}</span>
+                                    <span class="cajas">${datos.cajas}</span>
+                                    <span class="comision">$${datos.comision.toFixed(2)}</span>
+                                    <span class="devoluciones">${datos.devoluciones}</span>
+                                </div>
                                </div>`;
                 document.getElementById('resultado').innerHTML = resumen;
             } else {
@@ -149,7 +185,6 @@
             }
         }
 
-        // Función para limpiar los registros almacenados
         function limpiarRegistros() {
             if (confirm('¿Estás seguro de que deseas borrar todos los registros?')) {
                 localStorage.clear();
